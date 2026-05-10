@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DumpAlert — How It Works</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080808; --card: #111; --border: #1f1f1f;
+      --pri: #10b981; --pri-glow: rgba(16,185,129,.25);
+      --t1: #f1f5f9; --t2: #94a3b8; --t3: #475569;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--t1);
+      min-height: 100vh; padding: 48px 64px;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 56px; animation: fadeUp .7s ease both; }
+    .logo {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: 30px; font-weight: 900; color: var(--pri); margin-bottom: 10px;
+    }
+    .tagline { font-size: 15px; color: var(--t2); }
+
+    /* ── Section label ── */
+    .sec-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--pri);
+      margin-bottom: 28px; opacity: 0;
+    }
+    .sec-label.show { animation: fadeUp .5s ease both; opacity: 1; }
+
+    /* ── 4-step pipeline ── */
+    .pipeline {
+      display: flex; align-items: stretch; justify-content: center;
+      gap: 0; margin-bottom: 64px;
+    }
+    .step {
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 18px; padding: 32px 26px; width: 210px;
+      text-align: center; opacity: 0; transform: translateY(24px);
+      transition: opacity .5s ease, transform .5s ease, border-color .4s, box-shadow .4s;
+    }
+    .step.show { opacity: 1; transform: translateY(0); }
+    .step.glow {
+      border-color: var(--pri);
+      box-shadow: 0 0 0 1px var(--pri), 0 0 40px var(--pri-glow);
+      animation: pulse 2.4s ease infinite;
+    }
+    .s-icon { font-size: 40px; margin-bottom: 14px; display: block; }
+    .s-num { font-size: 10px; font-weight: 700; letter-spacing: .12em; color: var(--pri); text-transform: uppercase; margin-bottom: 6px; }
+    .s-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+    .s-desc { font-size: 12px; color: var(--t2); line-height: 1.6; }
+
+    .arrow {
+      align-self: center; font-size: 26px; color: var(--pri);
+      padding: 0 10px; opacity: 0; transition: opacity .4s ease;
+      flex-shrink: 0;
+    }
+    .arrow.show { opacity: 1; }
+
+    /* ── Technical pipeline box ── */
+    .tech-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 36px 44px; margin-bottom: 56px;
+      opacity: 0; animation: fadeUp .7s ease 2.6s both;
+    }
+    .tech-flow {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 10px; justify-content: center; margin-top: 22px;
+    }
+    .node {
+      background: #161616; border: 1px solid #2a2a2a;
+      border-radius: 12px; padding: 14px 22px; text-align: center;
+    }
+    .node.highlight { border-color: var(--pri); background: rgba(16,185,129,.06); }
+    .n-title { font-size: 13px; font-weight: 700; }
+    .n-sub   { font-size: 11px; color: var(--t2); margin-top: 3px; }
+    .node.highlight .n-title { color: var(--pri); }
+    .t-arrow { color: var(--pri); font-size: 20px; }
+
+    /* ── Feature cards ── */
+    .features {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; opacity: 0; animation: fadeUp .7s ease 3.2s both;
+    }
+    .feat {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px 20px;
+    }
+    .f-icon  { font-size: 26px; margin-bottom: 12px; }
+    .f-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .f-desc  { font-size: 12px; color: var(--t2); line-height: 1.6; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; margin-top: 56px;
+      font-size: 12px; color: var(--t3);
+      opacity: 0; animation: fadeUp .6s ease 3.8s both;
+    }
+    .footer span { color: var(--pri); font-weight: 600; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 1px var(--pri), 0 0 30px var(--pri-glow); }
+      50%      { box-shadow: 0 0 0 1px var(--pri), 0 0 55px rgba(16,185,129,.4); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14H6L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+      </svg>
+      DumpAlert
+    </div>
+    <div class="tagline">AI-Powered Illegal Dumping Reporter — System Methodology</div>
+  </div>
+
+  <!-- ── USER FLOW ── -->
+  <div class="sec-label" id="lbl1">User Flow — 10 Seconds End to End</div>
+
+  <div class="pipeline">
+    <div class="step" id="s1">
+      <span class="s-icon">📷</span>
+      <div class="s-num">Step 1</div>
+      <div class="s-title">Photo Upload</div>
+      <div class="s-desc">Citizen uploads or captures a photo of an illegal dump site from their phone</div>
+    </div>
+    <div class="arrow" id="a1">→</div>
+
+    <div class="step" id="s2">
+      <span class="s-icon">🤖</span>
+      <div class="s-num">Step 2</div>
+      <div class="s-title">AI Analysis</div>
+      <div class="s-desc">Vision AI classifies waste type, scores severity 1–10, and estimates weight in kg</div>
+    </div>
+    <div class="arrow" id="a2">→</div>
+
+    <div class="step" id="s3">
+      <span class="s-icon">📋</span>
+      <div class="s-num">Step 3</div>
+      <div class="s-title">Auto-Complaint</div>
+      <div class="s-desc">Formal complaint letter auto-drafted with GPS, waste type, severity & recommended action</div>
+    </div>
+    <div class="arrow" id="a3">→</div>
+
+    <div class="step" id="s4">
+      <span class="s-icon">✅</span>
+      <div class="s-num">Step 4</div>
+      <div class="s-title">Ticket Filed</div>
+      <div class="s-desc">Complaint filed via Open311 or Swachhata-MoHUA. Ticket ID generated instantly.</div>
+    </div>
+  </div>
+
+  <!-- ── TECHNICAL PIPELINE ── -->
+  <div class="tech-box">
+    <div class="sec-label show" style="margin-bottom:18px">Technical Pipeline</div>
+    <div class="tech-flow">
+      <div class="node">
+        <div class="n-title">Browser</div>
+        <div class="n-sub">HTML / CSS / JS</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="node">
+        <div class="n-title">FastAPI</div>
+        <div class="n-sub">Python backend</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="node">
+        <div class="n-title">Duplicate Check</div>
+        <div class="n-sub">GPS &lt; 100 m radius</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="node highlight">
+        <div class="n-title">NVIDIA Vision AI</div>
+        <div class="n-sub">via OpenRouter (free tier)</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="node">
+        <div class="n-title">JSON Result</div>
+        <div class="n-sub">type · severity · weight</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="node">
+        <div class="n-title">Civic Credits</div>
+        <div class="n-sub">R = sev × weight × K</div>
+      </div>
+      <div class="t-arrow">→</div>
+      <div class="node">
+        <div class="n-title">Ticket ID</div>
+        <div class="n-sub">DA-YYYYMMDD-XXXX</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KEY FEATURES ── -->
+  <div class="sec-label show" style="opacity:1; margin-bottom:20px">Key Features — Backed by Research</div>
+  <div class="features">
+    <div class="feat">
+      <div class="f-icon">🔍</div>
+      <div class="f-title">AI Waste Classification</div>
+      <div class="f-desc">Vision model identifies plastic, chemical, construction, organic, e-waste, or mixed waste from a single photo</div>
+    </div>
+    <div class="feat">
+      <div class="f-icon">⚖️</div>
+      <div class="f-title">Weight Estimation</div>
+      <div class="f-desc">Human-mimetic approach — AI uses reference objects in the image (cars, bins, curbs) to estimate weight in kg</div>
+    </div>
+    <div class="feat">
+      <div class="f-icon">📍</div>
+      <div class="f-title">Duplicate Detection</div>
+      <div class="f-desc">GPS clustering prevents the same dump being reported twice — warns user if a report exists within 100 m</div>
+    </div>
+    <div class="feat">
+      <div class="f-icon">⭐</div>
+      <div class="f-title">Civic Credits</div>
+      <div class="f-desc">Gamified incentive system rewards citizens based on severity and waste weight to encourage reporting</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Live at <span>dumpalert-production.up.railway.app</span> &nbsp;·&nbsp;
+    Built with FastAPI · NVIDIA Vision AI · Leaflet.js · Open311 / Swachhata-MoHUA
+  </div>
+
+  <script>
+    // Sequentially animate pipeline steps
+    const steps   = ['s1','s2','s3','s4'];
+    const arrows   = ['a1','a2','a3'];
+    const stepDelay  = 700;   // ms between each step
+    const arrowDelay = 400;   // ms after step before arrow
+
+    document.getElementById('lbl1').classList.add('show');
+
+    steps.forEach((id, i) => {
+      const t = 300 + i * stepDelay;
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        el.classList.add('show');
+        setTimeout(() => el.classList.add('glow'), 250);
+        if (arrows[i]) setTimeout(() => document.getElementById(arrows[i]).classList.add('show'), arrowDelay);
+      }, t);
+    });
+  </script>
+</body>
+</html>
