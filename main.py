@@ -107,24 +107,25 @@ async def analyze(
     lat: float = Form(19.076),
     lon: float = Form(72.877),
 ):
-    duplicate = find_duplicate(lat, lon)
+    try:
+        duplicate = find_duplicate(lat, lon)
 
-    if demo_mode.lower() == "true":
-        raw_bytes = await image.read()
-        result = random.choice(DEMO_RESULTS).copy()
-    else:
-        api_key = os.getenv("GEMINI_API_KEY", "")
-        raw_bytes = await image.read()
-        pil_img = Image.open(io.BytesIO(raw_bytes))
-        buf = io.BytesIO()
-        pil_img.save(buf, format="JPEG")
+        if demo_mode.lower() == "true":
+            await image.read()
+            result = random.choice(DEMO_RESULTS).copy()
+        else:
+            api_key = os.getenv("GEMINI_API_KEY", "")
+            raw_bytes = await image.read()
+            pil_img = Image.open(io.BytesIO(raw_bytes))
+            buf = io.BytesIO()
+            pil_img.save(buf, format="JPEG")
 
-        client = genai.Client(api_key=api_key)
-        prompt = """Multi-phase illegal waste analysis:
-PHASE 1 – Image Quality: Is the photo clear enough to analyze?
-PHASE 2 – Identification: What type of waste is present?
-PHASE 3 – Severity Assessment: How severe is the illegal dumping (1-10)?
-PHASE 4 – Weight Estimation: Using reference objects visible (cars, bins, curbs), estimate weight in kg.
+            client = genai.Client(api_key=api_key)
+            prompt = """Multi-phase illegal waste analysis:
+PHASE 1 - Image Quality: Is the photo clear enough to analyze?
+PHASE 2 - Identification: What type of waste is present?
+PHASE 3 - Severity Assessment: How severe is the illegal dumping (1-10)?
+PHASE 4 - Weight Estimation: Using reference objects visible (cars, bins, curbs), estimate weight in kg.
 
 Return ONLY a valid JSON object, no markdown:
 {
@@ -139,22 +140,30 @@ Return ONLY a valid JSON object, no markdown:
   "estimated_weight_kg": integer,
   "recommended_action": "one sentence"
 }"""
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=[types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"), prompt]
-        )
-        raw = response.text.strip().replace("```json", "").replace("```", "").strip()
-        result = json.loads(raw)
+            response = client.models.generate_content(
+                model="gemini-2.0-flash-lite",
+                contents=[types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"), prompt]
+            )
+            raw = response.text.strip().replace("```json", "").replace("```", "").strip()
+            result = json.loads(raw)
 
-    if result.get("waste_detected"):
-        result["civic_credits"] = civic_credits(
-            result.get("severity", 5), result.get("estimated_weight_kg", 100)
-        )
+        if result.get("waste_detected"):
+            result["civic_credits"] = civic_credits(
+                result.get("severity", 5), result.get("estimated_weight_kg", 100)
+            )
 
-    if duplicate:
-        result["duplicate"] = {"ticket_id": duplicate["ticket_id"], "waste_type": duplicate["waste_type"]}
+        if duplicate:
+            result["duplicate"] = {"ticket_id": duplicate["ticket_id"], "waste_type": duplicate["waste_type"]}
 
-    return result
+        return result
+
+    except Exception as e:
+        return {
+            "waste_detected": False,
+            "error": str(e),
+            "image_quality": "Error",
+            "description": f"Analysis failed: {str(e)}"
+        }
 
 @app.post("/api/file-report")
 async def file_report(data: dict):
