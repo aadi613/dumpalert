@@ -144,7 +144,10 @@ async def analyze(
                 },
                 timeout=30
             )
-            raw = resp.json()["choices"][0]["message"]["content"].strip().replace("```json","").replace("```","").strip()
+            resp_json = resp.json()
+            if "choices" not in resp_json:
+                raise ValueError(f"OpenRouter error: {resp_json}")
+            raw = resp_json["choices"][0]["message"]["content"].strip().replace("```json","").replace("```","").strip()
             result = json.loads(raw)
 
         if result.get("waste_detected"):
