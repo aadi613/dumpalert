@@ -98,6 +98,10 @@ def find_duplicate(lat: float, lon: float):
 async def root():
     return FileResponse("static/index.html")
 
+@app.get("/methodology.html")
+async def methodology():
+    return FileResponse("static/methodology.html")
+
 @app.post("/api/analyze")
 async def analyze(
     image: UploadFile = File(...),
