@@ -136,7 +136,7 @@ async def analyze(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={
-                    "model": "meta-llama/llama-3.2-11b-vision-instruct:free",
+                    "model": "google/gemma-4-31b-it:free",
                     "messages": [{"role": "user", "content": [
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
                         {"type": "text", "text": prompt}
