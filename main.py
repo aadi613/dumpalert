@@ -2,10 +2,8 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from google import genai
-from google.genai import types
 from PIL import Image
-import json, random, io, os
+import json, random, io, os, base64, requests as _req
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -114,20 +112,14 @@ async def analyze(
             await image.read()
             result = random.choice(DEMO_RESULTS).copy()
         else:
-            api_key = os.getenv("GEMINI_API_KEY", "")
+            api_key = os.getenv("OPENROUTER_API_KEY", "")
             raw_bytes = await image.read()
             pil_img = Image.open(io.BytesIO(raw_bytes))
             buf = io.BytesIO()
             pil_img.save(buf, format="JPEG")
+            b64 = base64.b64encode(buf.getvalue()).decode()
 
-            client = genai.Client(api_key=api_key)
-            prompt = """Multi-phase illegal waste analysis:
-PHASE 1 - Image Quality: Is the photo clear enough to analyze?
-PHASE 2 - Identification: What type of waste is present?
-PHASE 3 - Severity Assessment: How severe is the illegal dumping (1-10)?
-PHASE 4 - Weight Estimation: Using reference objects visible (cars, bins, curbs), estimate weight in kg.
-
-Return ONLY a valid JSON object, no markdown:
+            prompt = """Analyze this image for illegal waste dumping. Return ONLY a valid JSON object, no markdown:
 {
   "waste_detected": true or false,
   "image_quality": "Good / Blurry / Too Dark / Unclear",
@@ -140,11 +132,19 @@ Return ONLY a valid JSON object, no markdown:
   "estimated_weight_kg": integer,
   "recommended_action": "one sentence"
 }"""
-            response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
-                contents=[types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg"), prompt]
+            resp = _req.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "meta-llama/llama-3.2-11b-vision-instruct:free",
+                    "messages": [{"role": "user", "content": [
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                        {"type": "text", "text": prompt}
+                    ]}]
+                },
+                timeout=30
             )
-            raw = response.text.strip().replace("```json", "").replace("```", "").strip()
+            raw = resp.json()["choices"][0]["message"]["content"].strip().replace("```json","").replace("```","").strip()
             result = json.loads(raw)
 
         if result.get("waste_detected"):
