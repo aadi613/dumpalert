@@ -27,9 +27,9 @@ Most people see illegal dumping but never report it. The reason is friction:
 
   📷 Photo            🤖 AI Analysis          📋 Complaint          ✅ Filed
   ─────────           ──────────────          ────────────          ───────
-  User uploads   →    Gemini Vision      →    Auto-drafted     →    Open311 /
-  or captures         classifies waste        complaint letter       Swachhata
-  a photo             in 4 phases             with all details       API call
+  User uploads   →    NVIDIA Nemotron    →    Auto-drafted     →    Open311 /
+  or captures         Vision via              complaint letter       Swachhata
+  a photo             OpenRouter              with all details       API call
                                                                      + Ticket ID
 
 
@@ -48,13 +48,13 @@ Most people see illegal dumping but never report it. The reason is friction:
        ├── Demo Mode? ──────── Yes → return pre-set realistic result
        │                       No  ↓
        │
-       └── Gemini 2.0 Flash (Vision-Language Model)
+       └── NVIDIA Nemotron Vision (via OpenRouter free tier)
                │
-               │  4-phase prompt:
-               │  Phase 1 → Image Quality Check  (Good / Blurry / Too Dark)
-               │  Phase 2 → Waste Identification (plastic / chemical / construction...)
-               │  Phase 3 → Severity Assessment  (score 1–10 + label)
-               │  Phase 4 → Weight Estimation    (using reference objects in image)
+               │  Structured prompt:
+               │  → Image Quality Check  (Good / Blurry / Too Dark)
+               │  → Waste Identification (plastic / chemical / construction...)
+               │  → Severity Assessment  (score 1–10 + label)
+               │  → Weight Estimation    (using reference objects in image)
                │
                └── Returns JSON → FastAPI → Browser renders result card
                                                     │
@@ -80,7 +80,7 @@ Most people see illegal dumping but never report it. The reason is friction:
 
 | Feature | Research Basis | Implementation |
 |---|---|---|
-| Vision-Language classification | Gemini 1.5 Flash zero-shot (Novelis, 2024) | 4-phase Gemini prompt |
+| Vision-Language classification | Gemini 1.5 Flash zero-shot (Novelis, 2024) | Structured VLM prompt via OpenRouter |
 | Weight estimation | Human-mimetic VLM approach (PMC, 2025) | Added to AI prompt |
 | Image quality check | Prevents "unclear image" rejection (MoHUA docs) | Phase 1 of prompt |
 | Severity scoring 1–10 | Harm-block adaptation (Vertex AI docs) | Returned in JSON |
@@ -97,7 +97,7 @@ Most people see illegal dumping but never report it. The reason is friction:
 |---|---|---|
 | Frontend | HTML + CSS + Vanilla JS | No framework needed, full design control |
 | Backend | Python + FastAPI | Fast, async, easy file upload handling |
-| AI Model | Google Gemini 2.0 Flash | Free tier, multimodal, 194 tokens/sec |
+| AI Model | NVIDIA Nemotron Vision (OpenRouter) | Free tier, multimodal vision-language model |
 | Maps | Leaflet.js | Free, no API key, OpenStreetMap tiles |
 | Server | Uvicorn (ASGI) | Works with FastAPI out of the box |
 | Styling | Pure CSS (Inter font) | No Bootstrap dependency |
@@ -109,7 +109,7 @@ Most people see illegal dumping but never report it. The reason is friction:
 ```
 environment_el/
 │
-├── main.py                  ← FastAPI backend (API routes + Gemini calls)
+├── main.py                  ← FastAPI backend (API routes + OpenRouter Vision calls)
 ├── .env                     ← API keys (never commit this to GitHub)
 ├── README.md                ← This file
 │
@@ -123,7 +123,8 @@ environment_el/
 
 **main.py**
 - Defines all API routes under `/api/*`
-- Calls Gemini API with a 4-phase prompt
+- Calls NVIDIA Nemotron Vision via OpenRouter API for real image analysis
+- Demo Mode returns pre-set realistic scenarios (no API key needed)
 - Stores reports in memory (no database needed for prototype)
 - Serves the static frontend files
 - Calculates Civic Credits and checks for duplicates
@@ -152,7 +153,7 @@ environment_el/
 | Method | Endpoint | What it does |
 |---|---|---|
 | `GET` | `/` | Serves the frontend (index.html) |
-| `POST` | `/api/analyze` | Sends image to Gemini, returns classification JSON |
+| `POST` | `/api/analyze` | Sends image to NVIDIA Nemotron Vision (OpenRouter), returns classification JSON |
 | `POST` | `/api/file-report` | Creates a ticket, stores report, returns ticket ID |
 | `GET` | `/api/reports` | Returns all filed reports (for dashboard) |
 
@@ -179,15 +180,15 @@ environment_el/
 
 ### 1. Install dependencies
 ```bash
-pip install fastapi uvicorn python-multipart google-genai pillow python-dotenv streamlit-folium folium
+pip install fastapi uvicorn python-multipart pillow python-dotenv requests
 ```
 
-### 2. Add your Gemini API key
+### 2. Add your OpenRouter API key
 Edit the `.env` file:
 ```
-GEMINI_API_KEY=your_key_here
+OPENROUTER_API_KEY=your_key_here
 ```
-Get a free key at: https://aistudio.google.com/apikey
+Get a free key at: https://openrouter.ai (sign up → Keys → Create Key)
 
 ### 3. Start the server
 ```bash
@@ -213,7 +214,7 @@ For a demo or presentation this is ideal: fast, reliable, no external dependenci
 1. Create free account at railway.app
 2. Push this project to GitHub
 3. In Railway: New Project → Deploy from GitHub → select your repo
-4. Add environment variable: `GEMINI_API_KEY = your_key`
+4. Add environment variable: `OPENROUTER_API_KEY = your_key`
 5. Railway auto-detects Python and deploys — you get a URL like `dumpalert.railway.app`
 
 ### Option B — Render
@@ -221,7 +222,7 @@ For a demo or presentation this is ideal: fast, reliable, no external dependenci
 2. New Web Service → connect GitHub repo
 3. Build command: `pip install -r requirements.txt`
 4. Start command: `python -m uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Add `GEMINI_API_KEY` as environment variable
+5. Add `OPENROUTER_API_KEY` as environment variable
 
 ### requirements.txt (needed for deployment)
 ```
@@ -231,6 +232,7 @@ python-multipart
 google-genai
 pillow
 python-dotenv
+requests
 ```
 
 ---
@@ -255,7 +257,7 @@ python-dotenv
 - Ticket tracking is **simulated** — a production version would call the real Open311 or Swachhata API
 - Reports are stored **in memory** — restarting the server clears them (production needs a database)
 - No **user authentication** — production needs login for accountability
-- Gemini free tier has **rate limits** — Demo Mode works without any API key
+- OpenRouter free tier models can be **slow or rate-limited** — Demo Mode works without any API key
 
 ---
 
