@@ -20,23 +20,58 @@ DEMO_RESULTS = [
     {
         "waste_detected": True, "image_quality": "Good",
         "waste_type": "mixed", "severity": 8, "severity_label": "High",
-        "description": "A large pile of mixed household and construction waste has been illegally dumped on an open roadside area. The dump contains plastic bags, broken furniture, and debris spread across approximately 3 square metres. Waste appears to have accumulated over several days.",
+        "description": "A large pile of mixed household and construction waste has been illegally dumped on an open roadside area. The dump contains plastic bags, broken furniture, and debris spread across approximately 3 square metres. Waste appears to have accumulated over several days based on weathering patterns.",
         "health_risk": "High", "estimated_volume": "Medium (1–5 m³)", "estimated_weight_kg": 380,
         "recommended_action": "Dispatch a cleanup crew within 24 hours and install CCTV to deter future dumping."
     },
     {
         "waste_detected": True, "image_quality": "Good",
         "waste_type": "plastic", "severity": 5, "severity_label": "Medium",
-        "description": "Scattered plastic bottles, bags and packaging material are visible across the area. Consumer plastic litter accumulated over time with no immediately visible hazardous materials.",
+        "description": "Scattered plastic bottles, bags and packaging material are visible across the area. Consumer plastic litter has accumulated over time with no immediately visible hazardous materials. The spread covers roughly 10 square metres of public land.",
         "health_risk": "Low", "estimated_volume": "Small (<1 m³)", "estimated_weight_kg": 45,
-        "recommended_action": "Schedule routine cleanup and install waste bins nearby to prevent recurrence."
+        "recommended_action": "Schedule routine cleanup within 72 hours and install waste bins nearby to prevent recurrence."
     },
     {
         "waste_detected": True, "image_quality": "Good",
         "waste_type": "construction", "severity": 9, "severity_label": "Critical",
-        "description": "Large quantities of construction debris including broken concrete, metal rods, and asbestos-like material dumped illegally. Volume and nature of waste poses significant safety and environmental hazards requiring immediate response.",
+        "description": "Large quantities of construction debris including broken concrete, metal rods, and asbestos-like sheeting have been dumped illegally. The volume and hazardous nature of the waste poses immediate safety risks to nearby residents and wildlife.",
         "health_risk": "High", "estimated_volume": "Large (>5 m³)", "estimated_weight_kg": 2400,
-        "recommended_action": "Immediately cordon off area, conduct hazardous material assessment, and arrange specialist disposal."
+        "recommended_action": "Immediately cordon off the area, conduct a hazardous material assessment, and arrange specialist disposal within 12 hours."
+    },
+    {
+        "waste_detected": True, "image_quality": "Good",
+        "waste_type": "organic", "severity": 4, "severity_label": "Medium",
+        "description": "A decomposing pile of organic waste including food scraps, garden trimmings, and biodegradable material is visible. The waste is attracting insects and poses a moderate public health risk due to odour and potential disease vectors.",
+        "health_risk": "Medium", "estimated_volume": "Small (<1 m³)", "estimated_weight_kg": 120,
+        "recommended_action": "Remove within 48 hours and treat area with disinfectant to prevent pest infestation."
+    },
+    {
+        "waste_detected": True, "image_quality": "Good",
+        "waste_type": "electronic", "severity": 7, "severity_label": "High",
+        "description": "Discarded electronic waste including CRT monitors, circuit boards, and cables has been illegally dumped. E-waste contains toxic materials such as lead, cadmium, and mercury that can leach into the soil and contaminate groundwater.",
+        "health_risk": "High", "estimated_volume": "Small (<1 m³)", "estimated_weight_kg": 210,
+        "recommended_action": "Engage a certified e-waste recycler for collection and ensure the site is tested for heavy metal contamination."
+    },
+    {
+        "waste_detected": True, "image_quality": "Good",
+        "waste_type": "chemical", "severity": 10, "severity_label": "Critical",
+        "description": "Unlabelled chemical drums and industrial containers have been illegally abandoned at this location. Visible liquid seepage suggests active leakage of potentially hazardous substances into surrounding soil. This constitutes an environmental emergency.",
+        "health_risk": "High", "estimated_volume": "Medium (1–5 m³)", "estimated_weight_kg": 850,
+        "recommended_action": "Immediately alert hazmat authorities, isolate the area within a 50m radius, and do not approach without protective equipment."
+    },
+    {
+        "waste_detected": True, "image_quality": "Good",
+        "waste_type": "mixed", "severity": 6, "severity_label": "Medium",
+        "description": "A moderate accumulation of mixed domestic and commercial waste including cardboard, plastic wrapping, and metal cans has been dumped near a drainage channel. The proximity to water infrastructure raises the risk of blockage and flooding.",
+        "health_risk": "Medium", "estimated_volume": "Medium (1–5 m³)", "estimated_weight_kg": 290,
+        "recommended_action": "Clear waste within 48 hours, prioritising material near the drainage channel to prevent blockage."
+    },
+    {
+        "waste_detected": True, "image_quality": "Good",
+        "waste_type": "construction", "severity": 6, "severity_label": "Medium",
+        "description": "Builder's rubble including broken tiles, sand bags, and timber offcuts has been deposited on public land. The dump appears to be from a nearby renovation project. No immediately hazardous materials are visible but the volume obstructs pedestrian access.",
+        "health_risk": "Low", "estimated_volume": "Medium (1–5 m³)", "estimated_weight_kg": 620,
+        "recommended_action": "Issue a notice to identify responsible party and arrange removal within 5 business days."
     },
 ]
 
@@ -76,7 +111,7 @@ async def analyze(
 
     if demo_mode.lower() == "true":
         raw_bytes = await image.read()
-        result = DEMO_RESULTS[len(raw_bytes) % len(DEMO_RESULTS)].copy()
+        result = random.choice(DEMO_RESULTS).copy()
     else:
         api_key = os.getenv("GEMINI_API_KEY", "")
         raw_bytes = await image.read()
