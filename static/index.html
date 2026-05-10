@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DumpAlert — AI Illegal Dumping Reporter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+        DumpAlert
+      </div>
+      <span class="badge">AI Prototype</span>
+    </div>
+    <div class="header-right">
+      <label class="toggle-wrap">
+        <span class="toggle-label">Demo Mode</span>
+        <div class="toggle">
+          <input type="checkbox" id="demo-toggle" checked>
+          <span class="slider"></span>
+        </div>
+      </label>
+      <div class="credits-chip">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        <span id="total-credits">0</span>&nbsp;Civic Credits
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ LAYOUT ══════════════════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <button class="nav-btn active" data-tab="report">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/>
+          <circle cx="12" cy="13" r="3"/>
+        </svg>
+        Report
+      </button>
+      <button class="nav-btn" data-tab="complaint">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Complaint
+      </button>
+      <button class="nav-btn" data-tab="dashboard">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Dashboard
+      </button>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-stat"><span class="s-label">Reports</span><span class="s-val" id="sb-total">0</span></div>
+        <div class="sidebar-stat"><span class="s-label">Open</span><span class="s-val" id="sb-open">0</span></div>
+        <div class="sidebar-stat"><span class="s-label">Critical</span><span class="s-val s-red" id="sb-crit">0</span></div>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="content">
+
+      <!-- ── TAB: REPORT ─────────────────────────────────────────────────── -->
+      <section id="tab-report" class="tab active">
+        <div class="page-head">
+          <h1>Report Illegal Dumping</h1>
+          <p>Upload a photo — AI classifies waste, estimates weight, and auto-files a complaint.</p>
+        </div>
+
+        <div class="two-col">
+
+          <!-- Left: inputs -->
+          <div class="card">
+            <div class="card-body">
+              <div class="field-label">Evidence Photo</div>
+
+              <div class="upload-zone" id="upload-zone">
+                <input type="file" id="file-input" accept="image/*" hidden>
+                <div id="upload-placeholder">
+                  <div class="upload-icon">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/>
+                      <circle cx="12" cy="13" r="3"/>
+                    </svg>
+                  </div>
+                  <p>Drop photo or <span class="link">click to browse</span></p>
+                  <small>JPG, PNG supported</small>
+                </div>
+                <img id="preview" hidden>
+                <button class="remove-btn" id="remove-btn" hidden>✕</button>
+              </div>
+
+              <button class="btn-ghost w-full" id="camera-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                Use Camera
+              </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="card-body">
+              <div class="field-label">Location</div>
+              <input class="inp" type="text" id="address" placeholder="Street address (optional)">
+              <div class="row2">
+                <input class="inp" type="number" id="lat" value="19.0760" step="0.001" placeholder="Latitude">
+                <input class="inp" type="number" id="lon" value="72.8777" step="0.001" placeholder="Longitude">
+              </div>
+              <button class="btn-ghost w-full" id="gps-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+                Use my GPS location
+              </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="card-body">
+              <button class="btn-primary" id="analyze-btn" disabled>
+                <span id="btn-text">Analyze with AI</span>
+                <div class="spinner" id="btn-spin" hidden></div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: result -->
+          <div id="result-area">
+            <div class="empty-state" id="empty-result">
+              <div class="empty-icon">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <p>AI result appears here</p>
+              <small>Upload a photo and click Analyze</small>
+            </div>
+            <div id="result-card" class="card" hidden></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── TAB: COMPLAINT ──────────────────────────────────────────────── -->
+      <section id="tab-complaint" class="tab">
+        <div class="page-head">
+          <h1>Auto-Generated Complaint</h1>
+          <p>Review, edit, and file the complaint to local authorities via Open311 or Swachhata-MoHUA.</p>
+        </div>
+
+        <div class="empty-state" id="complaint-empty">
+          <div class="empty-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+            </svg>
+          </div>
+          <p>No analysis yet</p>
+          <small>Complete the Report tab first</small>
+          <button class="btn-ghost" onclick="switchTab('report')">Go to Report →</button>
+        </div>
+
+        <div id="complaint-content" class="two-col" hidden>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="field-label">Complaint Letter <span style="color:var(--t3);font-weight:400;text-transform:none;font-size:11px">— editable</span></div>
+              <textarea class="complaint-ta" id="complaint-text"></textarea>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="card-body">
+              <div class="field-label">Filing Platform</div>
+              <div class="platform-list">
+                <label class="platform-opt">
+                  <input type="radio" name="platform" value="Open311" checked>
+                  <div class="platform-card">
+                    <div class="p-name">Open311 GeoReport v2</div>
+                    <div class="p-desc">International standard · Used in 100+ cities globally</div>
+                  </div>
+                </label>
+                <label class="platform-opt">
+                  <input type="radio" name="platform" value="Swachhata">
+                  <div class="platform-card">
+                    <div class="p-name">Swachhata-MoHUA</div>
+                    <div class="p-desc">India's national civic platform · Ministry of Housing & Urban Affairs</div>
+                  </div>
+                </label>
+              </div>
+              <input class="inp" type="email" id="council-email" value="complaints@municipality.gov" placeholder="Authority email">
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="card-body">
+              <button class="btn-primary" id="file-btn">
+                <span id="file-btn-text">File Report</span>
+                <div class="spinner" id="file-spin" hidden></div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" id="complaint-summary"></div>
+            <div class="ticket-card" id="ticket-card" hidden></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── TAB: DASHBOARD ─────────────────────────────────────────────── -->
+      <section id="tab-dashboard" class="tab">
+        <div class="page-head">
+          <h1>Reports Dashboard</h1>
+          <p>All filed reports, severity map, and ticket history.</p>
+        </div>
+
+        <div class="empty-state" id="dash-empty">
+          <div class="empty-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <p>No reports filed yet</p>
+          <small>Filed reports will appear here</small>
+        </div>
+
+        <div id="dash-content" hidden>
+          <div class="metrics" id="metrics"></div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-body">
+              <div class="field-label">Dump Locations Map</div>
+              <div id="dash-map" class="map-lg"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-body">
+              <div class="field-label">Report History</div>
+              <div id="report-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ══ CAMERA MODAL ════════════════════════════════════════════════════════ -->
+  <div class="overlay" id="cam-modal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <span>Take a Photo</span>
+        <button class="close-btn" id="cam-close">✕</button>
+      </div>
+      <video id="cam-video" autoplay playsinline class="cam-video"></video>
+      <canvas id="cam-canvas" hidden></canvas>
+      <div class="modal-foot">
+        <button class="btn-ghost" id="cam-cancel">Cancel</button>
+        <button class="btn-primary" id="cam-capture" style="flex:1">Capture Photo</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
