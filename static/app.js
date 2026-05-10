@@ -143,9 +143,12 @@ function renderResult(d) {
   card.hidden = false;
 
   if (!d.waste_detected) {
+    const isError = !!d.error;
+    const msg = d.description || 'The AI did not detect illegal waste in this image. Try a clearer photo from a closer angle showing the dump.';
     card.innerHTML = `
-      <div class="res-head"><span style="color:#f59e0b;font-weight:700">No Dumping Detected</span></div>
-      <div class="desc-block">The AI did not detect illegal waste in this image. Try a clearer photo from a closer angle showing the dump.</div>`;
+      <div class="res-head"><span style="color:${isError?'#ef4444':'#f59e0b'};font-weight:700">${isError ? 'Analysis Error' : 'No Dumping Detected'}</span></div>
+      <div class="desc-block">${msg}</div>
+      ${isError ? `<div class="desc-block" style="font-size:11px;color:var(--t3);margin-top:6px">Technical detail: ${d.error}</div>` : ''}`;
     return;
   }
 
