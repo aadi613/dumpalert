@@ -285,8 +285,11 @@ document.getElementById('file-btn').addEventListener('click', async () => {
       body: JSON.stringify({ ...S.result, lat:S.lat, lon:S.lon, address:S.address, platform })
     });
     const data = await res.json();
-    S.totalCredits += S.result.civic_credits || 0;
-    document.getElementById('total-credits').textContent = S.totalCredits;
+    const earned = S.result.civic_credits || 0;
+    const from = S.totalCredits;
+    S.totalCredits += earned;
+    animateCredits(from, S.totalCredits);
+    if (earned > 0) fireConfetti();
     showTicket(data);
     updateSidebarStats();
   } catch (err) {
@@ -379,4 +382,25 @@ async function updateSidebarStats() {
   document.getElementById('sb-total').textContent = reports.length;
   document.getElementById('sb-open').textContent  = reports.filter(r=>r.status==='Open').length;
   document.getElementById('sb-crit').textContent  = reports.filter(r=>r.severity>=8).length;
+}
+
+function animateCredits(from, to) {
+  const el = document.getElementById('total-credits');
+  const duration = 1000;
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * ease);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function fireConfetti() {
+  const count = 180;
+  const defaults = { origin: { y: 0.7 }, zIndex: 9999 };
+  confetti({ ...defaults, particleCount: count * 0.4, spread: 80, colors: ['#10b981', '#34d399', '#6ee7b7'] });
+  confetti({ ...defaults, particleCount: count * 0.3, spread: 120, scalar: 0.8, colors: ['#10b981', '#fff', '#a7f3d0'] });
+  confetti({ ...defaults, particleCount: count * 0.3, spread: 60, startVelocity: 45, scalar: 1.2, colors: ['#059669', '#10b981'] });
 }
